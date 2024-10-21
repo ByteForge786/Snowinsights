@@ -1,85 +1,65 @@
 import streamlit as st
-from typing import List, Tuple
-import random
-import time
+from typing import List
 
-# Mock LLM response function
-def get_llm_response(prompt: str) -> str:
-    # Simulate API call delay
-    time.sleep(1.5)
-    responses = [
-        "Based on the latest research, it appears that...",
-        "That's an interesting question. In my analysis...",
-        "There are several factors to consider here...",
-        "According to recent studies in this field...",
-        "While opinions vary, the consensus among experts is..."
+def get_mock_response(user_input: str) -> str:
+    # In a real LLM, this would call the model. For now, we'll use simple responses.
+    responses = {
+        "Hello": "Hello! How can I assist you today?",
+        "How are you?": "As an AI, I don't have feelings, but I'm functioning well and ready to help!",
+        "What's the weather like?": "I'm sorry, I don't have access to real-time weather data. You might want to check a weather app or website for accurate information.",
+        "Tell me a joke": "Why don't scientists trust atoms? Because they make up everything!",
+    }
+    return responses.get(user_input, "I'm not sure how to respond to that. Can you please rephrase or ask something else?")
+
+def get_suggested_questions() -> List[str]:
+    return [
+        "Hello",
+        "How are you?",
+        "What's the weather like?",
+        "Tell me a joke"
     ]
-    return random.choice(responses) + " " + prompt
 
-# Initialize session state
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
-if 'user_input' not in st.session_state:
-    st.session_state.user_input = ''
+def chat_interface():
+    st.title("Mock LLM Chatbot")
 
-def display_message(role: str, content: str):
-    with st.chat_message(role):
-        st.markdown(content)
-
-def display_suggested_questions():
-    st.markdown("Here are some questions you might want to ask:")
-    questions = [
-        "📊 What are the latest trends in data science?",
-        "🌐 How is AI impacting global economics?",
-        "🧠 Can you explain the concept of neural networks?",
-        "🚀 What advancements are happening in space exploration?",
-        "🌿 How can technology contribute to environmental sustainability?"
-    ]
-    for question in questions:
-        if st.button(question):
-            st.session_state.user_input = question
-
-# Main application
-st.title("💬 Professional AI Assistant")
-
-# Display chat history
-for message in st.session_state.messages:
-    display_message(message["role"], message["content"])
-
-# Initial greeting
-if not st.session_state.messages:
-    display_message("assistant", "👋 Hello! I'm your AI assistant. How can I help you today?")
-    display_suggested_questions()
-
-# User input
-user_input = st.chat_input("Type your message here...", key="user_input", value=st.session_state.user_input)
-if user_input:
-    # Clear the session state user input
-    st.session_state.user_input = ''
-    
-    # Display user message
-    display_message("user", user_input)
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    
-    # Get and display AI response
-    ai_response = get_llm_response(user_input)
-    display_message("assistant", ai_response)
-    st.session_state.messages.append({"role": "assistant", "content": ai_response})
-
-    # Force a rerun to display the new messages immediately
-    st.experimental_rerun()
-
-# Sidebar for additional options
-with st.sidebar:
-    st.title("⚙️ Chat Options")
-    if st.button("Clear Chat History"):
+    # Initialize chat history
+    if "messages" not in st.session_state:
         st.session_state.messages = []
-        st.experimental_rerun()
-    
-    st.markdown("---")
-    st.markdown("### About")
-    st.markdown("""
-    This AI assistant is powered by advanced language models and is designed to provide informative and engaging responses on a wide range of topics.
-    
-    Please note that while our AI strives for accuracy, it may occasionally provide incorrect information. Always verify critical information from authoritative sources.
-    """)
+
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Initial greeting and suggested questions
+    if not st.session_state.messages:
+        with st.chat_message("assistant"):
+            st.markdown("Hi! I'm your mock LLM chatbot. How can I help you today?")
+            st.markdown("Here are some suggested questions you can ask:")
+            suggested_questions = get_suggested_questions()
+            for question in suggested_questions:
+                if st.button(question, key=f"suggest_{question}"):
+                    st.session_state.user_input = question
+            st.markdown("Feel free to ask any of these questions or type your own!")
+        
+        greeting = "Hi! I'm your mock LLM chatbot. How can I help you today?\n\nHere are some suggested questions you can ask:\n"
+        greeting += "\n".join([f"- {q}" for q in suggested_questions])
+        greeting += "\n\nFeel free to ask any of these questions or type your own!"
+        st.session_state.messages.append({"role": "assistant", "content": greeting})
+
+    # React to user input
+    if prompt := st.chat_input("What's your question?", key="user_input"):
+        # Display user message in chat message container
+        st.chat_message("user").markdown(prompt)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        response = get_mock_response(prompt)
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+if __name__ == "__main__":
+    chat_interface()
