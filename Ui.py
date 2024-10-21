@@ -42,6 +42,7 @@ def chat_interface():
             for idx, question in enumerate(suggested_questions):
                 if cols[idx].button(question, key=f"suggest_{question}"):
                     st.session_state.user_input = question
+                    st.rerun()
             st.markdown("Feel free to ask any of these questions or type your own!")
         
         greeting = "Hi! I'm your mock LLM chatbot. How can I help you today?\n\nHere are some suggested questions you can ask:\n"
@@ -50,11 +51,14 @@ def chat_interface():
         st.session_state.messages.append({"role": "assistant", "content": greeting})
 
     # Chat input
-    user_input = st.chat_input("What's your question?", key="chat_input", value=st.session_state.user_input)
+    user_input = st.chat_input("What's your question?", key="chat_input")
+
+    # If there's a stored user input, use it and clear the storage
+    if st.session_state.user_input:
+        user_input = st.session_state.user_input
+        st.session_state.user_input = ""
 
     if user_input:
-        st.session_state.user_input = ""  # Clear the input for the next interaction
-        
         # Display user message in chat message container
         st.chat_message("user").markdown(user_input)
         # Add user message to chat history
