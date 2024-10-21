@@ -2,7 +2,6 @@ import streamlit as st
 from typing import List
 
 def get_mock_response(user_input: str) -> str:
-    # In a real LLM, this would call the model. For now, we'll use simple responses.
     responses = {
         "Hello": "Hello! How can I assist you today?",
         "How are you?": "As an AI, I don't have feelings, but I'm functioning well and ready to help!",
@@ -22,9 +21,11 @@ def get_suggested_questions() -> List[str]:
 def chat_interface():
     st.title("Mock LLM Chatbot")
 
-    # Initialize chat history
+    # Initialize chat history and user input
     if "messages" not in st.session_state:
         st.session_state.messages = []
+    if "user_input" not in st.session_state:
+        st.session_state.user_input = ""
 
     # Display chat messages from history on app rerun
     for message in st.session_state.messages:
@@ -37,8 +38,9 @@ def chat_interface():
             st.markdown("Hi! I'm your mock LLM chatbot. How can I help you today?")
             st.markdown("Here are some suggested questions you can ask:")
             suggested_questions = get_suggested_questions()
-            for question in suggested_questions:
-                if st.button(question, key=f"suggest_{question}"):
+            cols = st.columns(len(suggested_questions))
+            for idx, question in enumerate(suggested_questions):
+                if cols[idx].button(question, key=f"suggest_{question}"):
                     st.session_state.user_input = question
             st.markdown("Feel free to ask any of these questions or type your own!")
         
@@ -47,19 +49,26 @@ def chat_interface():
         greeting += "\n\nFeel free to ask any of these questions or type your own!"
         st.session_state.messages.append({"role": "assistant", "content": greeting})
 
-    # React to user input
-    if prompt := st.chat_input("What's your question?", key="user_input"):
-        # Display user message in chat message container
-        st.chat_message("user").markdown(prompt)
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
+    # Chat input
+    user_input = st.chat_input("What's your question?", key="chat_input", value=st.session_state.user_input)
 
-        response = get_mock_response(prompt)
+    if user_input:
+        st.session_state.user_input = ""  # Clear the input for the next interaction
+        
+        # Display user message in chat message container
+        st.chat_message("user").markdown(user_input)
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": user_input})
+
+        response = get_mock_response(user_input)
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
         # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+        # Rerun the app to display the new messages
+        st.rerun()
 
 if __name__ == "__main__":
     chat_interface()
