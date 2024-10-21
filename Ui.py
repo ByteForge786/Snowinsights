@@ -37,10 +37,10 @@ def chat_interface():
         with st.chat_message("assistant"):
             st.markdown("Hi! I'm your mock LLM chatbot. How can I help you today?")
             st.markdown("Here are some suggested questions you can ask:")
+            
             suggested_questions = get_suggested_questions()
-            cols = st.columns(len(suggested_questions))
-            for idx, question in enumerate(suggested_questions):
-                if cols[idx].button(question, key=f"suggest_{question}"):
+            for question in suggested_questions:
+                if st.button(question, key=f"suggest_{question}"):
                     # Add question and response to chat history
                     st.session_state.messages.append({"role": "user", "content": question})
                     response = get_mock_response(question)
