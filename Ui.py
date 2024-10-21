@@ -21,19 +21,19 @@ def get_suggested_questions() -> List[str]:
 def chat_interface():
     st.title("Mock LLM Chatbot")
 
-    # Initialize chat history and user input
+    # Initialize chat history, suggestions, and user input
     if "messages" not in st.session_state:
         st.session_state.messages = []
-    if "user_input" not in st.session_state:
-        st.session_state.user_input = ""
+    if "show_suggestions" not in st.session_state:
+        st.session_state.show_suggestions = True
 
-    # Display chat messages from history on app rerun
+    # Display chat messages from history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Initial greeting and suggested questions
-    if not st.session_state.messages:
+    # Show suggestions initially
+    if st.session_state.show_suggestions:
         with st.chat_message("assistant"):
             st.markdown("Hi! I'm your mock LLM chatbot. How can I help you today?")
             st.markdown("Here are some suggested questions you can ask:")
@@ -41,38 +41,28 @@ def chat_interface():
             cols = st.columns(len(suggested_questions))
             for idx, question in enumerate(suggested_questions):
                 if cols[idx].button(question, key=f"suggest_{question}"):
-                    st.session_state.user_input = question
-                    st.rerun()
-            st.markdown("Feel free to ask any of these questions or type your own!")
-        
-        greeting = "Hi! I'm your mock LLM chatbot. How can I help you today?\n\nHere are some suggested questions you can ask:\n"
-        greeting += "\n".join([f"- {q}" for q in suggested_questions])
-        greeting += "\n\nFeel free to ask any of these questions or type your own!"
-        st.session_state.messages.append({"role": "assistant", "content": greeting})
+                    # Add question and response to chat history
+                    st.session_state.messages.append({"role": "user", "content": question})
+                    response = get_mock_response(question)
+                    st.session_state.messages.append({"role": "assistant", "content": response})
+                    
+                    # Remove suggestions after a question is selected
+                    st.session_state.show_suggestions = False
 
-    # Chat input
+    # Chat input for user to ask their own questions
     user_input = st.chat_input("What's your question?", key="chat_input")
-
-    # If there's a stored user input, use it and clear the storage
-    if st.session_state.user_input:
-        user_input = st.session_state.user_input
-        st.session_state.user_input = ""
-
+    
     if user_input:
         # Display user message in chat message container
         st.chat_message("user").markdown(user_input)
         # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": user_input})
 
+        # Get response and add to chat history
         response = get_mock_response(user_input)
-        # Display assistant response in chat message container
         with st.chat_message("assistant"):
             st.markdown(response)
-        # Add assistant response to chat history
         st.session_state.messages.append({"role": "assistant", "content": response})
-
-        # Rerun the app to display the new messages
-        st.rerun()
 
 if __name__ == "__main__":
     chat_interface()
